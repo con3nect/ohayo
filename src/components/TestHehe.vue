@@ -51,14 +51,14 @@
 
       graph.node(function (node) {
         return {
-          size: [60, 24],
+          size: [72, 22],
           label: node.tagName,
           labelCfg: {
             position: 'center',
             offset: 5,
             style: {
               // fill: '#535D79',
-              fontSize: 5
+              fontSize: 4
             }
           },
           style: {
@@ -152,7 +152,7 @@ export default {
   },
   data() {
     return {
-      sendQuestion: '1234'
+      sendQuestion: ''
     };
   },
   methods: {
@@ -201,10 +201,9 @@ export default {
     <div class="flex-col section">
       <div class="flex-col self-stretch">
         <span class="self-start text">Hi!!</span>
-        <div class="mt-22 flex-col items-start self-stretch">
-          <span class="font">我是小法，</span>
-          <span class="font">您的私人法律助手。</span>
-        </div>
+        <br>
+        <br>
+        <span class="font">我是小法，您的私人法律助手。</span>
       </div>
     </div>
       
@@ -223,27 +222,22 @@ export default {
     </div>
   </div>
   
-    <div class="flex-col items-start section_2">
-        <span class="font_2">问题处理过程：</span>
-            <div id="container"></div>
-    </div>
-
-    <div class="flex-col items-start section_3">
-      <span class="font_2 text_3">具体分析如下：</span>
-      <br>
-      <br>
-      <br>
-      <span class="text_4 mt-35">{{ analysisText }}</span>
-    </div>
+  <div class="flex-row">
+  <div class="flex-col section_2 left-section">
+    <span class="font_2">问题处理过程：</span>
+    <div id="container"></div>
+  </div>
+  <div class="flex-col section_3 right-section">
+    <span class="font_2 text_3">具体分析如下：</span>
+    <br>
+    <br>
+    <span class="text_4 mt-35">{{ analysisText }}</span>
+  </div>
+</div>
 
   </div>
 </template>
 
-<!-- <script setup>
-import { ref } from 'vue';
-
-const analysisText = ref('输出的文字分析xxxxxx');
-</script> -->
 
 <style scoped lang="css">
   .mt-73 { margin-top: 4.56rem; }
@@ -270,6 +264,13 @@ const analysisText = ref('输出的文字分析xxxxxx');
     font-weight: 600;
     line-height: 2.96rem;
   }
+  .font-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  }
+
   .font {
     font-size: 2.81rem;
     font-family: Poppins;
@@ -308,11 +309,29 @@ const analysisText = ref('输出的文字分析xxxxxx');
     line-height: 1.49rem;
   }
   .text_4 {
-    margin-left: 2.44rem;
-    color: #ffffff;
-    font-size: 1.63rem;
-    font-family: SourceHanSansCN;
-    line-height: 1.51rem;
+  margin-left: 2.44rem;
+  color: #ffffff;
+  font-size: 1.35rem;
+  font-family: SourceHanSansCN;
+  font-weight: normal;
+  line-height: 2rem;
   }
 
+  .flex-row {
+    display: flex;
+  }
+
+  .flex-col {
+    display: flex;
+    flex-direction: column;
+  }
+
+
+  .left-section {
+    width: 50%;
+  }
+
+  .right-section {
+    width: 50%;
+  }
 </style>
