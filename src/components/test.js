@@ -1,4 +1,4 @@
-const testJson = {
+const showTreeJson = {
   "tagName": "地域管辖",
   "attrs": {
       "fill": "green"
