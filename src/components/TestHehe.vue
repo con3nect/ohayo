@@ -1,18 +1,14 @@
 <script setup>
     import  {onMounted,ref,onBeforeUnmount}  from "vue"
     import G6 from "@antv/g6";
+    const graph = ref(null); // 使用ref存储graph实例
 
-    // import showTreeJson from './test'
-    // import {createAnalysis} from '../api/index'
-
-
-    onMounted(() => {
+    // 初始化图表
+    const initGraph = (data) => {
       const container = document.getElementById('container');
-      // const data =createAnalysis("おはよう")
-      // console.log(data)
       const width = container.scrollWidth;
       const height = container.scrollHeight || 500;
-      const graph = new G6.TreeGraph({
+      graph.value = new G6.TreeGraph({
         container: 'container',
         width,
         height,
@@ -49,7 +45,7 @@
         },
       });
 
-      graph.node(function (node) {
+      graph.value.node(function (node) {
         return {
           size: [72, 22],
           label: node.tagName,
@@ -66,77 +62,83 @@
           },
         };
       });
-      
-      //graph.data(showTreeJson);
-      // 定义拉取数据并更新图形的函数
-      const fetchDataAndUpdateGraph = async () => {
-        try {
-          const response = await fetch('http://localhost:8000/get_tree_data');
-          if (!response.ok) {
-            throw new Error('Network response was not ok: ' + response.statusText);
-          }
-          const treeData = await response.json();
-          graph.data(treeData);
-          graph.render();
-          graph.fitView();
-        } catch (error) {
-          console.error('Failed to load tree data:', error);
-        }
-      };
 
-      // 首次执行
-      fetchDataAndUpdateGraph();
-
-      // 使用setInterval每2秒钟执行一次
-      const intervalId = setInterval(fetchDataAndUpdateGraph, 1000);
-
-      // 如果需要的话，您可以在组件卸载或其他适当的时间清除此间隔
-      // 例如在Vue组件的beforeUnmount生命周期钩子中:
-      onBeforeUnmount(() => {
-        clearInterval(intervalId);
-      });
-
-      graph.render();
-      graph.fitView();
-
-      if (typeof window !== 'undefined') {
-        window.onresize = () => {
-          if (!graph || graph.get('destroyed')) return;
-          if (!container || !container.scrollWidth || !container.scrollHeight) return;
-          graph.changeSize(container.scrollWidth, container.scrollHeight);
-        };
-      }
-
-    });
-    // 根据名称模糊查询
-    function inputFuc() {
-
-    }
-
-    const analysisText = ref('おはようございます');
-
-    // Define the function to fetch analysis text
-    const fetchAnalysisText = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/get_analysis_text');
-        if (!response.ok) {
-          throw new Error('Network response was not ok: ' + response.statusText);
-        }
-        const data = await response.json();
-        analysisText.value = data.standard_answer;
-      } catch (error) {
-        console.error('Failed to load analysis text:', error);
-      }
+      graph.value.data(data);
+      graph.value.render();
+      graph.value.fitView();
     };
 
-    // Poll for the analysis text immediately and then every 2 seconds
-    fetchAnalysisText();
-    const analysisIntervalId = setInterval(fetchAnalysisText, 2000);
+// 更新图表数据但不重置用户的交互操作
+const updateGraphData = async () => {
+  try {
+    const response = await fetch('http://localhost:8000/get_tree_data');
+    if (!response.ok) {
+      throw new Error('Network response was not ok: ' + response.statusText);
+    }
+    const newData = await response.json();
+    if (graph.value) {
+      // Get current node positions
+      const currentData = graph.value.save();
+      const nodePositions = {};
+      currentData.nodes.forEach(node => {
+        nodePositions[node.id] = {
+          x: node.x,
+          y: node.y,
+        };
+      });
 
-    // Clear the interval when the component is about to unmount
+      // Change data
+      graph.value.changeData(newData);
+
+      // Apply the old positions to the new nodes
+      const newNodes = graph.value.getNodes();
+      newNodes.forEach((node) => {
+        const model = node.getModel();
+        if (nodePositions[model.id]) {
+          graph.value.updateItem(node, {
+            x: nodePositions[model.id].x,
+            y: nodePositions[model.id].y
+          });
+        }
+      });
+
+      graph.value.refreshPositions(); // Refresh the positions of the nodes
+      graph.value.fitView(); // Fit the graph to the view after updating the nodes
+    }
+  } catch (error) {
+    console.error('Failed to load tree data:', error);
+  }
+};
+      
+onMounted(async () => {
+  // 首次获取数据并初始化图表
+  const initialDataResponse = await fetch('http://localhost:8000/get_tree_data');
+  if (initialDataResponse.ok) {
+    const initialData = await initialDataResponse.json();
+    initGraph(initialData); // 调用 initGraph 函数以初始化图表
+
+    // 设置轮询，每2秒更新数据
+    const intervalId = setInterval(updateGraphData, 2000);
+
+    // 清除interval
     onBeforeUnmount(() => {
-      clearInterval(analysisIntervalId);
+      clearInterval(intervalId);
     });
+  } else {
+    console.error('Failed to load initial tree data:', initialDataResponse.statusText);
+  }
+
+  // 窗口大小变化时重新设置图表大小
+  window.onresize = () => {
+    if (graph.value && !graph.value.get('destroyed')) {
+      const container = document.getElementById('container');
+      if (container && container.scrollWidth && container.scrollHeight) {
+        graph.value.changeSize(container.scrollWidth, container.scrollHeight);
+      }
+    }
+  };
+});
+
 </script>
 
 
@@ -199,7 +201,7 @@ export default {
 <template>
   <div class="flex-col page">
     <div class="flex-col section">
-      <div class="flex-col self-stretch">
+      <div class="flex-col">
         <span class="self-start text">Hi!!</span>
         <br>
         <br>
@@ -287,7 +289,7 @@ export default {
     text-decoration: underline;
   }
   .section_2 {
-    padding: 2.56rem 2.53rem 4rem;
+    padding: 2.56rem 2.53rem 15rem;
     background-color: #adaec466;
   }
   .font_2 {
@@ -302,7 +304,7 @@ export default {
     height: 18.06rem;
   }
   .section_3 {
-    padding: 3.19rem 2.63rem 19.19rem;
+    padding: 3.19rem 2.63rem 15rem;
     background-color: #1c1e5380;
   }
   .text_3 {
