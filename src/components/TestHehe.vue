@@ -359,3 +359,5 @@ export default {
 .right-section {
   width: 25%;
 }</style>
+
+
